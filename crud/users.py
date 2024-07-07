@@ -20,9 +20,9 @@ async def get_users():
 
 async def create_user(user: UserPostDTO):
     global counter
-    post_user = user.model_dump()
-    post_user["id"] = counter + 1
+    post_user = user.model_dump()  # выгружаем модель как словарь
     counter += 1
+    post_user["id"] = counter
     user_full_model = UserBaseDTO.model_validate(
         post_user,
     )
@@ -36,3 +36,9 @@ async def delete_user(id: int):
             database_list.pop(database_list.index(user))
             return True
     return False
+
+
+async def get_user_by_id(id: int):
+    for user in database_list:
+        if user.id == id:
+            return user

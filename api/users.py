@@ -19,3 +19,9 @@ async def create_user(user: UserPostDTO) -> UserBaseDTO:
 @router.delete("")
 async def pop_user(id: int) -> bool:
     return await users.delete_user(id)
+
+
+@router.get("/{user_id}")
+async def get_user_by_id(id: int) -> UserBaseDTO | None:
+    return await users.get_user_by_id(id)
+
