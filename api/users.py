@@ -16,12 +16,11 @@ async def create_user(user: UserPostDTO) -> UserBaseDTO:
     return await users.create_user(user)
 
 
-@router.delete("")
-async def pop_user(id: int) -> bool:
-    return await users.delete_user(id)
+@router.delete("/{user_id}")
+async def pop_user(user_id: int) -> bool:
+    return await users.delete_user(user_id)
 
 
 @router.get("/{user_id}")
 async def get_user_by_id(user_id: int) -> UserBaseDTO | None:
     return await users.get_user_by_id(user_id)
-
