@@ -22,6 +22,6 @@ async def pop_user(id: int) -> bool:
 
 
 @router.get("/{user_id}")
-async def get_user_by_id(id: int) -> UserBaseDTO | None:
-    return await users.get_user_by_id(id)
+async def get_user_by_id(user_id: int) -> UserBaseDTO | None:
+    return await users.get_user_by_id(user_id)
 
