@@ -1,44 +1,54 @@
 # функции для пользователей
-from database import database_list
-from core.schemas import UserPostDTO, UserBaseDTO
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, delete, update
+
+from core.schemas import UserPostDTO, UserBaseDTO, UserPatchDTO
+from core.database.models import User
 
 counter = 0
 
 
-async def get_users():
-    # from core.schemas import UserBaseDTO
-    # database_list.append(
-    #     UserBaseDTO(
-    #         id=1,
-    #         username="16chepolka12",
-    #         age=17,
-    #         gender='woman'
-    #     )
-    # )
-    return database_list
+async def get_users(session: AsyncSession):
+    stmt = select(User)  # запрос в базу данных = select * from users
+    result = await session.scalars(stmt)  # выполнение запроса в базу данных
+    return [UserBaseDTO.model_validate(model, from_attributes=True) for model in result]
 
 
-async def create_user(user: UserPostDTO):
-    global counter
-    post_user = user.model_dump()  # выгружаем модель как словарь
-    counter += 1
-    post_user["id"] = counter
-    user_full_model = UserBaseDTO.model_validate(
-        post_user,
-    )
-    database_list.append(user_full_model)
-    return user_full_model
+async def create_user(user: UserPostDTO, session: AsyncSession):
+    user_object = User(**user.model_dump())  # превратит модель в ключ значение
+    session.add(user_object)
+    await session.commit()
+    await session.refresh(user_object)  # обновляем данные о пользователе в переменной user_object
+    return UserBaseDTO.model_validate(user_object, from_attributes=True)
 
 
-async def delete_user(id: int):
-    for user in database_list:
-        if user.id == id:
-            database_list.pop(database_list.index(user))
-            return True
-    return False
+async def delete_user(id: int, session: AsyncSession):
+    if not await get_user_by_id(id, session):
+        return False
+    stmt = delete(User).where(User.id == id)
+    # stmt = "DELETE * FROM users WHERE id = ?"
+    await session.execute(stmt)
+    await session.commit()
+    return True
 
 
-async def get_user_by_id(id: int):
-    for user in database_list:
-        if user.id == id:
-            return user
+async def get_user_by_id(id: int, session: AsyncSession, alchemy_model: bool = False):
+    stmt = select(User).where(User.id == id)
+    result = await session.scalar(stmt)
+    if result:
+        if alchemy_model:
+            return result
+        return UserBaseDTO.model_validate(result, from_attributes=True)
+    return None
+
+
+async def update_user(id: int, data: UserPatchDTO, session: AsyncSession):
+    user = await get_user_by_id(id, session, alchemy_model=True)
+    if not user:
+        return None
+
+    stmt = update(User).values(**data.model_dump(exclude_none=True))
+    await session.execute(stmt)
+    await session.commit()
+    await session.refresh(user)
+    return UserBaseDTO.model_validate(user, from_attributes=True)

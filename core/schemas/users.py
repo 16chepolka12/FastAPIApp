@@ -24,3 +24,9 @@ class UserPostDTO(BaseModel):
 
 class UserBaseDTO(UserPostDTO):
     id: int
+
+
+class UserPatchDTO(UserPostDTO):
+    username: str | None
+    age: int | None
+    gender: Gender | None
