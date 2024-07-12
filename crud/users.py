@@ -5,8 +5,6 @@ from sqlalchemy import select, delete, update
 from core.schemas import UserPostDTO, UserBaseDTO, UserPatchDTO
 from core.database.models import User
 
-counter = 0
-
 
 async def get_users(session: AsyncSession):
     stmt = select(User)  # запрос в базу данных = select * from users
@@ -47,7 +45,9 @@ async def update_user(id: int, data: UserPatchDTO, session: AsyncSession):
     if not user:
         return None
 
-    stmt = update(User).values(**data.model_dump(exclude_none=True))
+    # UPDATE users SET username = ?
+    # UPDATE users SET username = ? WHERE id = ?
+    stmt = update(User).values(**data.model_dump(exclude_none=True)).where(User.id == id)
     await session.execute(stmt)
     await session.commit()
     await session.refresh(user)
